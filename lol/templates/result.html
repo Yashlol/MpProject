@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphical Method Result</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .graph {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .info {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .constraint-panel, .objective-panel {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .constraint-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .constraint-row input {
+            margin-right: 5px;
+        }
+        .add-constraint-btn {
+            background-color: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: none;
+        }
+        .add-constraint-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Graphical Method: Result</h1>
+
+        <!-- Combined Form Section to Enter Objective Function and Constraints -->
+        <div class="objective-panel">
+            <h2>Enter Objective Function and Constraints</h2>
+            <form action="{% url 'graphical_method' %}" method="POST">
+                {% csrf_token %}
+                
+                <!-- Objective Function Input -->
+                <label for="objective_function">Objective Function (e.g., 3, 4 for 3x + 4y):</label>
+                <input type="text" name="objective_function" id="objective_function" placeholder="Enter coefficients" required>
+                
+                <!-- Constraints Input -->
+                <div id="constraint-container">
+                    <h3>Enter Constraints</h3>
+                    <div class="constraint-row">
+                        <input type="text" name="constraint_1[]" placeholder="Coefficient x1" required>
+                        <input type="text" name="constraint_1[]" placeholder="Coefficient x2" required>
+                        <input type="text" name="constraint_1[]" placeholder="Right-hand side" required>
+                    </div>
+                </div>
+                
+                <!-- Add more constraints -->
+                <button type="button" class="add-constraint-btn" onclick="addConstraint()">Add Another Constraint</button>
+                
+                <!-- Submit Button -->
+                <button type="submit" class="button">Submit</button>
+            </form>
+        </div>
+
+        {% if optimal_point %}
+            <div class="info">
+                <h2>Optimal Point</h2>
+                <p>{{ optimal_point }}</p>
+
+                <h2>Optimal Value</h2>
+                <p>{{ optimal_value }}</p>
+            </div>
+
+            <div class="graph">
+                <h2>Graph</h2>
+                {% if graph_image %}
+                    <img src="data:image/png;base64,{{ graph_image }}" alt="Graphical Method Graph">
+                {% else %}
+                    <p>No graph available.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if error_message %}
+            <p class="error">{{ error_message }}</p>
+        {% endif %}
+
+        <a href="/" class="button">Back to Home</a>
+    </div>
+
+    <script>
+        function addConstraint() {
+            const container = document.getElementById('constraint-container');
+            const newConstraint = document.createElement('div');
+            newConstraint.classList.add('constraint-row');
+            newConstraint.innerHTML = `
+                <input type="text" name="constraint_1[]" placeholder="Coefficient x1" required>
+                <input type="text" name="constraint_1[]" placeholder="Coefficient x2" required>
+                <input type="text" name="constraint_1[]" placeholder="Right-hand side" required>
+            `;
+            container.appendChild(newConstraint);
+        }
+    </script>
+</body>
+</html>
