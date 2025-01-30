@@ -4,66 +4,60 @@ import matplotlib.pyplot as plt
 import numpy as np
 import io
 import base64
-
+from scipy.spatial import ConvexHull  
+from matplotlib.patches import Polygon  
 def graphical_method_view(request):
     if request.method == 'POST':
         try:
+            # Get optimization type
+            optimization_type = request.POST.get('optimization_type', 'maximize')
+
             # Objective Function input
             objective_function_input = request.POST.get('objective_function', '').strip()
-
             if not objective_function_input:
                 raise ValueError("Objective function cannot be empty.")
-
-            # Parse coefficients from the objective function (assuming format "3, 4")
+            
+            # Parse coefficients from the objective function
             objective_coefficients = [float(x) for x in objective_function_input.split(',')]
 
-            # Constraints input
+            # Collect all constraints
             constraints = []
-            constraint_prefix = 'constraint_1'  # This should match the name attributes for constraints
+            A = []  # Coefficients matrix
+            b = []  # RHS values
             i = 1
             while True:
-                constraint_1 = request.POST.getlist(f'{constraint_prefix}[]')
-                if not constraint_1:
+                constraint_data = request.POST.getlist(f'constraint_{i}[]')
+                if not constraint_data:
                     break
+                
                 try:
-                    # Coefficients and right-hand side values
-                    constraint_coeffs = [float(x) for x in constraint_1[:2]]
-                    rhs_value = float(constraint_1[2])
-                    constraints.append((constraint_coeffs, rhs_value))
-                except ValueError:
-                    raise ValueError(f"Invalid input in constraint {i}, please check the values.")
+                    # Get coefficients, inequality type, and RHS value
+                    x1_coeff = float(constraint_data[0])
+                    x2_coeff = float(constraint_data[1])
+                    inequality_type = constraint_data[2]  # '<=', '>=', or '='
+                    rhs_value = float(constraint_data[3])
+                    
+                    constraints.append({
+                        'coefficients': [x1_coeff, x2_coeff],
+                        'inequality_type': inequality_type,
+                        'rhs': rhs_value
+                    })
+                    
+                    # Store in matrix form for solving
+                    A.append([x1_coeff, x2_coeff])
+                    b.append(rhs_value)
+
+                except (ValueError, IndexError):
+                    raise ValueError(f"Invalid input in constraint {i}")
                 i += 1
 
-            # Graph generation (Just an example, you can customize this part)
-            fig, ax = plt.subplots()
-            x = np.linspace(-10, 10, 400)
-            y = (objective_coefficients[0] * x) / objective_coefficients[1]
-            ax.plot(x, y, label='Objective Function')
-
-            for constraint in constraints:
-                constraint_coeffs, rhs_value = constraint
-                y_constraint = (rhs_value - constraint_coeffs[0] * x) / constraint_coeffs[1]
-                ax.plot(x, y_constraint, label=f'Constraint: {constraint_coeffs[0]}x + {constraint_coeffs[1]}y <= {rhs_value}')
-
-            # Format the graph for embedding into HTML
-            ax.set_xlabel('x')
-            ax.set_ylabel('y')
-            ax.legend()
-
-            # Save the plot to a BytesIO object and then encode it to base64
-            buffer = io.BytesIO()
-            plt.savefig(buffer, format='png')
-            buffer.seek(0)
-            img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-            # Send the optimal point and value for now as placeholders
-            optimal_point = (0, 0)  # Replace with your actual logic for optimal point calculation
-            optimal_value = sum(objective_coefficients)  # Replace with actual optimal value logic
+            # Call function to solve LP
+            graph_image, optimal_point, optimal_value = solve_linear_program(objective_coefficients, A, b,constraints, optimization_type)
 
             return render(request, 'result.html', {
                 'optimal_point': optimal_point,
                 'optimal_value': optimal_value,
-                'graph_image': img_str,
+                'graph_image': graph_image,
             })
 
         except ValueError as e:
@@ -73,10 +67,12 @@ def graphical_method_view(request):
 
     return render(request, 'result.html')
 
-def solve_linear_program(c, A, b):
+
+def solve_linear_program(c, A, b, constraints, optimization_type):
     """Solves the linear programming problem and generates a graph."""
-    bounds = [0, max(b)]  # Define a reasonable range for visualization
-    constraints = list(zip(A, b))
+    # Dynamic bounds based on constraints
+    x_values = [abs(row[0]) for row in A] + [abs(row[1]) for row in A]
+    bounds = [0, max(x_values) + 5]  # Slightly larger than max constraint
 
     # Solve using vertices of the feasible region
     vertices = []
@@ -88,8 +84,19 @@ def solve_linear_program(c, A, b):
             b_ = np.array([b[i], b[j]])
             try:
                 vertex = np.linalg.solve(A_, b_)
-                if all(np.dot(A, vertex) <= b) and all(vertex >= 0):  # Ensure non-negativity and feasibility
+                
+                # Check feasibility considering inequality type
+                lhs_values = np.dot(A, vertex)
+                feasible_conditions = [
+                    (lhs_values <= b).all() if constraint['inequality_type'] == '<=' else
+                    (lhs_values >= b).all() if constraint['inequality_type'] == '>=' else
+                    np.isclose(lhs_values, b).all()
+                    for constraint in constraints
+                ]
+                
+                if all(feasible_conditions) and (vertex >= 0).all():
                     vertices.append(vertex)
+
             except np.linalg.LinAlgError:
                 continue
 
@@ -100,9 +107,14 @@ def solve_linear_program(c, A, b):
     optimal_vertex = None
     optimal_value = None
     if len(feasible_vertices) > 0:
-        z_values = [np.dot(c, v) for v in feasible_vertices]
-        optimal_value = max(z_values)
-        optimal_vertex = feasible_vertices[np.argmax(z_values)]
+        z_values = np.dot(feasible_vertices, c)
+        if optimization_type == 'maximize':
+            optimal_index = np.argmax(z_values)
+        else:  # Minimization case
+            optimal_index = np.argmin(z_values)
+        
+        optimal_value = z_values[optimal_index]
+        optimal_vertex = feasible_vertices[optimal_index]
 
     # Generate graph
     graph_image = plot_constraints(constraints, bounds, feasible_region=feasible_vertices, optimal_vertex=optimal_vertex)
@@ -113,25 +125,34 @@ def solve_linear_program(c, A, b):
     return graph_image, optimal_vertex, optimal_value
 
 
+
 def plot_constraints(constraints, bounds, feasible_region=None, optimal_vertex=None):
     """Plots the constraints, feasible region, and optimal solution."""
     x = np.linspace(bounds[0], bounds[1], 400)
     plt.figure(figsize=(10, 8))
 
     # Plot constraints as lines
-    for coeff, b in constraints:
+    for constraint in constraints:
+        coeff, b = constraint['coefficients'], constraint['rhs']
         if coeff[1] != 0:  # Plot lines with a slope
             y = (b - coeff[0] * x) / coeff[1]
-            plt.plot(x, y, label=f"{coeff[0]}x1 + {coeff[1]}x2 ≤ {b}")
+            plt.plot(x, y, label=f"{coeff[0]}x1 + {coeff[1]}x2 {constraint['inequality_type']} {b}")
         else:  # Vertical line
             x_val = b / coeff[0]
             plt.axvline(x_val, color='r', linestyle='--', label=f"x1 = {x_val}")
 
     # Highlight feasible region
-    if feasible_region is not None and len(feasible_region) > 0:
-        hull = ConvexHull(feasible_region)
-        polygon = Polygon(feasible_region[hull.vertices], closed=True, color='lightgreen', alpha=0.5, label='Feasible Region')
-        plt.gca().add_patch(polygon)
+    # Highlight feasible region
+    if feasible_region is not None and len(feasible_region) >= 3:
+        try:
+            hull = ConvexHull(feasible_region)
+            polygon = Polygon(feasible_region[hull.vertices], closed=True, color='lightgreen', alpha=0.5, label='Feasible Region')
+            plt.gca().add_patch(polygon)
+        except QhullError:
+            print("QhullError: Not enough points to construct a valid feasible region.")
+    elif len(feasible_region) > 0:
+        print("Warning: Less than 3 feasible points. Feasible region not plotted.")
+
 
     # Highlight corner points
     if feasible_region is not None:
@@ -159,9 +180,9 @@ def plot_constraints(constraints, bounds, feasible_region=None, optimal_vertex=N
     plt.close()
 
     graph_image = base64.b64encode(image_png).decode('utf-8')
-    plt.savefig('test_graph.png')
 
     return graph_image
+
 
 def index(request):
     """Renders the index page to choose the method."""
