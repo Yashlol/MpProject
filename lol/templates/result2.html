@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simplex Method Solver</title>
+    <script type="text/javascript" async src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+            background-color: #f8fafc;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #1e293b;
+        }
+        label {
+            display: block;
+            margin-top: 1rem;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        button {
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .result {
+            margin-top: 2rem;
+            background: #e2e8f0;
+            padding: 1rem;
+            border-radius: 4px;
+            font-size: 1.2rem;
+        }
+        .error {
+            color: #ef4444;
+            margin-top: 1rem;
+        }
+        .constraint {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simplex Method Solver</h1>
+        <form id="simplexForm" method="post" action="{% url 'simplex_method' %}">
+            {% csrf_token %}
+            <label for="optimization_type">Optimization Type:</label>
+            <select name="optimization_type" id="optimization_type">
+                <option value="maximize" {% if request.POST.optimization_type == "maximize" %}selected{% endif %}>Maximize</option>
+                <option value="minimize" {% if request.POST.optimization_type == "minimize" %}selected{% endif %}>Minimize</option>
+            </select>
+
+            <label for="objective_function">Objective Function Coefficients (comma separated):</label>
+            <input type="text" name="objective_function" id="objective_function" placeholder="e.g., 3,2" required value="{{ request.POST.objective_function }}">
+
+            <div id="constraints">
+                <h2>Constraints</h2>
+                <div class="constraint">
+                    <label>Constraint 1: Coefficients (comma separated):</label>
+                    <input type="text" name="constraint_1[]" placeholder="e.g., 1,1" required value="{{ request.POST.constraint_1.0 }}">
+                    <label>Inequality:</label>
+                    <select name="constraint_1[]" required>
+                        <option value="<=" {% if request.POST.constraint_1.1 == "<=" %}selected{% endif %}>&le;</option>
+                        <option value=">=" {% if request.POST.constraint_1.1 == ">=" %}selected{% endif %}>&ge;</option>
+                    </select>
+                    <label>Right-hand side:</label>
+                    <input type="text" name="constraint_1[]" placeholder="e.g., 4" required value="{{ request.POST.constraint_1.2 }}">
+                </div>
+                <div class="constraint">
+                    <label>Constraint 2: Coefficients (comma separated):</label>
+                    <input type="text" name="constraint_2[]" placeholder="e.g., 2,1" required value="{{ request.POST.constraint_2.0 }}">
+                    <label>Inequality:</label>
+                    <select name="constraint_2[]" required>
+                        <option value="<=" {% if request.POST.constraint_2.1 == "<=" %}selected{% endif %}>&le;</option>
+                        <option value=">=" {% if request.POST.constraint_2.1 == ">=" %}selected{% endif %}>&ge;</option>
+                    </select>
+                    <label>Right-hand side:</label>
+                    <input type="text" name="constraint_2[]" placeholder="e.g., 5" required value="{{ request.POST.constraint_2.2 }}">
+                </div>
+            </div>
+            <button type="button" onclick="addConstraint()">Add Constraint</button>
+            <br>
+            <button type="submit">Solve Problem</button>
+        </form>
+
+        {% if error_message %}
+            <div class="error">{{ error_message }}</div>
+        {% endif %}
+
+        {% if optimal_point %}
+            <div class="result">
+                <h2>Solution:</h2>
+                <p>Minimize: <br> 
+                    \( Z = {% for coef in objective_function %}{{ coef }}x_{{ forloop.counter }}{% if not forloop.last %} + {% endif %}{% endfor %} \)
+                </p>
+                <p>Subject to:</p>
+                {% for constraint in constraints %}
+                    <p>\( {% for coef in constraint.coefficients %}{{ coef }}x_{{ forloop.counter }}{% if not forloop.last %} + {% endif %}{% endfor %} {{ constraint.inequality }} {{ constraint.rhs }} \)</p>
+                {% endfor %}
+                <p>\( x_1, x_2 \geq 0 \)</p>
+
+                <h3>Solution:</h3>
+                <p><strong>\( x_1 = {{ optimal_point.0 }}, x_2 = {{ optimal_point.1 }}, Z = {{ optimal_value }} \)</strong></p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        let constraintCount = 2;
+        function addConstraint() {
+            constraintCount++;
+            const constraintsDiv = document.getElementById('constraints');
+            const constraintDiv = document.createElement('div');
+            constraintDiv.className = 'constraint';
+            constraintDiv.innerHTML = `
+                <label>Constraint ${constraintCount}: Coefficients (comma separated):</label>
+                <input type="text" name="constraint_${constraintCount}[]" placeholder="e.g., 1,1" required>
+                <label>Inequality:</label>
+                <select name="constraint_${constraintCount}[]" required>
+                    <option value="<=" selected>&le;</option>
+                    <option value=">=">&ge;</option>
+                </select>
+                <label>Right-hand side:</label>
+                <input type="text" name="constraint_${constraintCount}[]" placeholder="e.g., 12" required>
+            `;
+            constraintsDiv.appendChild(constraintDiv);
+        }
+    </script>
+</body>
+</html>

@@ -6,6 +6,8 @@ import io
 import base64
 from scipy.spatial import ConvexHull
 from matplotlib.patches import Polygon
+from scipy.optimize import linprog
+
 
 def graphical_method_view(request):
     if request.method == 'POST':
@@ -183,5 +185,179 @@ def plot_constraints(constraints, feasible_region, optimal_vertex):
     buffer.seek(0)
     return base64.b64encode(buffer.getvalue()).decode('utf-8')
 
+'''
+SIMPLEX STARTS FROM HERE!!
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+'''
+
+def simplex_method_view(request):
+    if request.method == 'POST':
+        try:
+            # Get optimization type (default is 'maximize')
+            optimization_type = request.POST.get('optimization_type', 'maximize')
+            
+            # Retrieve and parse the objective function (comma-separated string)
+            objective_function_input = request.POST.get('objective_function', '').strip()
+            if not objective_function_input:
+                raise ValueError("Objective function cannot be empty.")
+            objective_function_list = [float(x) for x in objective_function_input.split(',')]
+            
+            # Parse constraints (get A, b for solver and original data for display)
+            A_list, b_list, constraints_data = parse_constraints_simplex(request)
+            A = np.array(A_list)
+            b = np.array(b_list)
+            
+            # Solve using linprog (which minimizes by default)
+            if optimization_type == 'maximize':
+                # For maximization, multiply the objective by -1,
+                # then multiply the resulting optimal value by -1 to recover the maximum.
+                result = linprog([-coef for coef in objective_function_list],
+                                 A_ub=A, b_ub=b, method="highs")
+                if not result.success:
+                    raise ValueError("No optimal solution found.")
+                solution = result.x
+                optimal_value = -result.fun
+            else:  # minimize
+                result = linprog(objective_function_list,
+                                 A_ub=A, b_ub=b, method="highs")
+                if not result.success:
+                    raise ValueError("No optimal solution found.")
+                solution = result.x
+                optimal_value = result.fun
+
+            context = {
+                'objective_function': objective_function_list,  # For display in template
+                'constraints': constraints_data,                # Original constraint data
+                'optimal_point': solution.tolist(),
+                'optimal_value': optimal_value,
+            }
+            return render(request, 'result2.html', context)
+        except ValueError as e:
+            return render(request, 'result2.html', {'error_message': str(e)})
+    return render(request, 'result2.html')
+
+
+def parse_constraints_simplex(request):
+    """
+    Parses constraints for the simplex method.
+    Expected format for each constraint (from the form):
+         constraint_i[]: [ "coef1,coef2,...", inequality, rhs ]
+    
+    If the inequality is ">=" or "≥", the constraint is converted to an equivalent
+    <= constraint by multiplying the coefficients and the RHS by -1.
+    
+    Returns:
+      - A: list of lists (processed coefficients for the solver)
+      - b: list (processed RHS values for the solver)
+      - constraints_data: list of dictionaries with original (or converted)
+        constraint values for display.
+    """
+    A = []
+    b = []
+    constraints_data = []
+    i = 1
+    while True:
+        constraint_data = request.POST.getlist(f'constraint_{i}[]')
+        if not constraint_data:
+            break
+        try:
+            # Expect exactly 3 items: coefficients string, inequality, and rhs.
+            coeff_str = constraint_data[0]
+            coeffs = [float(x.strip()) for x in coeff_str.split(',')]
+            inequality_type = constraint_data[1].strip()
+            rhs_value = float(constraint_data[2])
+            # If inequality is ">=" (or "≥"), convert to <= by multiplying by -1.
+            if inequality_type in [">=", "≥"]:
+                coeffs_converted = [-c for c in coeffs]
+                rhs_value_converted = -rhs_value
+            elif inequality_type in ["<=", "≤"]:
+                coeffs_converted = coeffs
+                rhs_value_converted = rhs_value
+            else:
+                raise ValueError("Inequality must be <=, ≤, >=, or ≥.")
+            A.append(coeffs_converted)
+            b.append(rhs_value_converted)
+            # Save original (or appropriately converted) data for display.
+            constraints_data.append({
+                "coefficients": coeffs,
+                "inequality": inequality_type,
+                "rhs": rhs_value
+            })
+        except (ValueError, IndexError):
+            raise ValueError(f"Invalid input in constraint {i}")
+        i += 1
+    return A, b, constraints_data
+
+def simplex(c, A, b):
+    """
+    Solves the LP using the Simplex Method:
+      Maximize: Z = c^T * x
+      Subject to: A * x <= b, x >= 0
+
+    Parameters:
+      - c: 1D numpy array of objective function coefficients
+      - A: 2D numpy array of constraint coefficients
+      - b: 1D numpy array of RHS values
+
+    Returns:
+      - solution: Optimal solution for the decision variables (numpy array)
+      - optimal_value: Optimal objective function value (float)
+    """
+    num_constraints, num_variables = A.shape
+
+    # Add slack variables to convert inequalities to equalities.
+    slack_vars = np.eye(num_constraints)
+    tableau = np.hstack((A, slack_vars, b.reshape(-1, 1)))
+
+    # Add the objective function row (with a minus sign for maximization).
+    obj_row = np.hstack((-c, np.zeros(num_constraints + 1)))
+    tableau = np.vstack((tableau, obj_row))
+
+    num_total_vars = num_variables + num_constraints
+
+    # Simplex iterations: use np.all() to check optimality.
+    while True:
+        if np.all(tableau[-1, :-1] >= 0):
+            break
+
+        # Determine the entering variable (most negative coefficient).
+        pivot_col = np.argmin(tableau[-1, :-1])
+
+        # Determine the leaving variable (minimum positive ratio of RHS / pivot_col value).
+        ratios = tableau[:-1, -1] / tableau[:-1, pivot_col]
+        ratios[ratios <= 0] = np.inf  # Ignore non-positive ratios.
+        pivot_row = np.argmin(ratios)
+
+        if np.all(ratios == np.inf):
+            raise ValueError("The problem is unbounded.")
+
+        # Pivot operation.
+        pivot_element = tableau[pivot_row, pivot_col]
+        tableau[pivot_row, :] /= pivot_element
+        for i in range(tableau.shape[0]):
+            if i != pivot_row:
+                tableau[i, :] -= tableau[i, pivot_col] * tableau[pivot_row, :]
+
+    # Extract the solution.
+    solution = np.zeros(num_total_vars)
+    for i in range(num_constraints):
+        # Use np.isclose for a robust comparison to 1.
+        basic_var_index = np.where(np.isclose(tableau[i, :-1], 1))[0]
+        if len(basic_var_index) == 1 and basic_var_index[0] < num_total_vars:
+            solution[basic_var_index[0]] = tableau[i, -1]
+
+    optimal_value = tableau[-1, -1]
+    return solution[:num_variables], optimal_value
+
 def index(request):
     return render(request, 'index.html')
+
