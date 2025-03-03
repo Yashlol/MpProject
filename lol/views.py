@@ -361,3 +361,116 @@ def simplex(c, A, b):
 def index(request):
     return render(request, 'index.html')
 
+def transportation_method_view(request):
+    if request.method == 'POST':
+        try:
+            # Parse supply points
+            supply_input = request.POST.get('supply', '').strip()
+            supply = [float(x.strip()) for x in supply_input.split(',')]
+
+            # Parse demand points
+            demand_input = request.POST.get('demand', '').strip()
+            demand = [float(x.strip()) for x in demand_input.split(',')]
+
+            # Parse cost matrix
+            cost_matrix_input = request.POST.get('cost_matrix', '').strip()
+            cost_matrix = [
+                [float(x.strip()) for x in row.split(',')]
+                for row in cost_matrix_input.split(';')
+            ]
+
+            # Solve transportation problem
+            result = solve_transportation_problem(cost_matrix, supply, demand)
+
+            if result["solution"] is not None:
+                context = {
+                    'optimal_solution': result["solution"].tolist(),
+                    'total_cost': result["total_cost"],
+                    'status': result["status"],
+                    'supply': supply,
+                    'demand': demand,
+                    'cost_matrix': cost_matrix,
+                }
+            else:
+                raise ValueError(f"Failed to find solution: {result['status']}")
+
+            return render(request, 'transportation.html', context)
+
+        except (ValueError, IndexError) as e:
+            return render(request, 'transportation.html', {
+                'error_message': str(e)
+            })
+
+    return render(request, 'transportation.html')
+
+def solve_transportation_problem(cost_matrix, supply, demand):
+    """
+    Solves the transportation problem using linear programming.
+    """
+    try:
+        # Convert inputs to numpy arrays
+        cost_matrix = np.array(cost_matrix)
+        supply = np.array(supply)
+        demand = np.array(demand)
+
+        # Verify problem is balanced
+        if supply.sum() != demand.sum():
+            raise ValueError("Supply and demand must be balanced")
+
+        # Get dimensions
+        m, n = cost_matrix.shape  # m sources, n destinations
+
+        # Flatten cost matrix for linprog
+        c = cost_matrix.flatten()
+
+        # Create equality constraints matrix and vector
+        A_eq = []
+        b_eq = []
+
+        # Supply constraints (row-wise)
+        for i in range(m):
+            row = np.zeros(m * n)
+            row[i*n:(i+1)*n] = 1
+            A_eq.append(row)
+            b_eq.append(supply[i])
+
+        # Demand constraints (column-wise)
+        for j in range(n):
+            col = np.zeros(m * n)
+            col[j::n] = 1
+            A_eq.append(col)
+            b_eq.append(demand[j])
+
+        # Convert to numpy arrays
+        A_eq = np.array(A_eq)
+        b_eq = np.array(b_eq)
+
+        # Solve using linprog
+        result = linprog(
+            c=c,
+            A_eq=A_eq,
+            b_eq=b_eq,
+            method='highs',
+            bounds=(0, None)
+        )
+
+        if result.success:
+            return {
+                "solution": result.x.reshape(m, n),
+                "total_cost": result.fun,
+                "status": "Optimal solution found"
+            }
+        else:
+            return {
+                "solution": None,
+                "total_cost": None,
+                "status": result.message
+            }
+
+    except Exception as e:
+        return {
+            "solution": None,
+            "total_cost": None,
+            "status": str(e)
+        }
+

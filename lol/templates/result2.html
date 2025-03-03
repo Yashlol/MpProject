@@ -8,20 +8,22 @@
     <style>
         body {
             font-family: "Times New Roman", Times, serif;
-            background-color: #f8fafc;
+            background-color: #111827;
+            color: #f3f4f6;
             padding: 2rem;
         }
         .container {
             max-width: 800px;
             margin: auto;
-            background: white;
+            background: #1f2937;
             padding: 2rem;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            border: 1px solid #374151;
         }
         h1 {
             text-align: center;
-            color: #1e293b;
+            color: #f3f4f6;
         }
         label {
             display: block;
@@ -31,32 +33,46 @@
             width: 100%;
             padding: 0.5rem;
             margin-top: 0.5rem;
+            background-color: #111827;
+            border: 1px solid #374151;
+            color: #f3f4f6;
+            border-radius: 4px;
+        }
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
         }
         button {
             margin-top: 1rem;
             padding: 0.75rem 1.5rem;
-            background-color: #2563eb;
+            background-color: #3b82f6;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2563eb;
         }
         .result {
             margin-top: 2rem;
-            background: #e2e8f0;
+            background: #374151;
             padding: 1rem;
             border-radius: 4px;
             font-size: 1.2rem;
+            color: #f3f4f6;
         }
         .error {
-            color: #ef4444;
+            color: #fca5a5;
             margin-top: 1rem;
         }
         .constraint {
             margin-bottom: 1rem;
             padding: 1rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #374151;
             border-radius: 4px;
+            background: #1f2937;
         }
     </style>
 </head>

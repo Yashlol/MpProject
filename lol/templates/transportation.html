@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transportation Problem Solver</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --background-dark: #111827;
+            --background-card: #1f2937;
+            --text-light: #f3f4f6;
+            --text-gray: #9ca3af;
+            --border-color: #374151;
+            --error-color: #ef4444;
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--background-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            padding: 2rem;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--background-card);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--background-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .help-text {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+            margin-top: 0.25rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .error {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-top: 1rem;
+            color: var(--text-gray);
+            text-decoration: none;
+        }
+
+        .back-button:hover {
+            color: var(--text-light);
+        }
+
+        /* Add result section styles */
+        .result-section {
+            margin: 2rem 0;
+            padding: 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            display: none; /* Hidden by default */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: var(--background-card);
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .total-cost {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 1rem 0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .loading-spinner {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Transportation Problem Solver</h1>
+        
+        {% if error_message %}
+        <div class="error">
+            <i class="fas fa-exclamation-circle"></i> {{ error_message }}
+        </div>
+        {% endif %}
+
+        <form id="transportationForm" method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="supply">Supply Points:</label>
+                <input type="text" id="supply" name="supply" required 
+                       placeholder="e.g., 20, 30, 25">
+                <p class="help-text">Enter comma-separated supply values</p>
+            </div>
+
+            <div class="form-group">
+                <label for="demand">Demand Points:</label>
+                <input type="text" id="demand" name="demand" required 
+                       placeholder="e.g., 10, 25, 40">
+                <p class="help-text">Enter comma-separated demand values</p>
+            </div>
+
+            <div class="form-group">
+                <label for="cost_matrix">Cost Matrix:</label>
+                <input type="text" id="cost_matrix" name="cost_matrix" required 
+                       placeholder="e.g., 2,3,1; 5,4,8; 5,6,8">
+                <p class="help-text">Enter cost matrix with rows separated by semicolons and columns by commas</p>
+            </div>
+
+            <button type="submit">
+                <i class="fas fa-calculator"></i> Solve Problem
+            </button>
+        </form>
+
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Solving the problem...</p>
+        </div>
+
+        {% if optimal_solution %}
+        <div class="result-section" style="display: block;">
+            <h2>Optimal Solution</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>From/To</th>
+                        {% for j in demand %}
+                        <th>D{{ forloop.counter }}</th>
+                        {% endfor %}
+                        <th>Supply</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in optimal_solution %}
+                    <tr>
+                        <th>S{{ forloop.counter }}</th>
+                        {% for cell in row %}
+                        <td>{{ cell|floatformat:2 }}</td>
+                        {% endfor %}
+                        <td>{{ supply|slice:forloop.counter0|first }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <th>Demand</th>
+                        {% for d in demand %}
+                        <td>{{ d }}</td>
+                        {% endfor %}
+                        <td>-</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p class="total-cost">Total Transportation Cost: {{ total_cost|floatformat:2 }}</p>
+            <p>Status: {{ status }}</p>
+        </div>
+        {% endif %}
+
+        <a href="/" class="back-button">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+    </div>
+
+    <script>
+        document.getElementById('transportationForm').addEventListener('submit', function(e) {
+            document.querySelector('.loading').style.display = 'block';
+        });
+    </script>
+</body>
+</html> 
