@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'lol',
+    'crop_yield_app'
 ]
 
 MIDDLEWARE = [
