@@ -8,12 +8,12 @@ class CropForm(forms.Form):
 
 
 SOIL_CHOICES = [
-    ('Loamy', 'Loamy'),
-    ('Clayey', 'Clayey'),
-    ('Sandy', 'Sandy'),
-    ('Alluvial', 'Alluvial'),
-    ('Black', 'Black'),
-    ('Arid', 'Arid'),
+    ('loamy', 'Loamy'),
+    ('clayey', 'Clayey'),
+    ('sandy', 'Sandy'),
+    ('alluvial', 'Alluvial'),
+    ('black', 'Black'),
+    ('arid', 'Arid'),
 ]
 
 class CropRecommendationForm(forms.Form):
