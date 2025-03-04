@@ -14,8 +14,16 @@
             {% csrf_token %}
             <div class="mb-3">
                 <label for="soil_type" class="form-label">Select Soil Type</label>
-                {{ form.soil_type }}
-            </div>           
+                <select name="soil_type" id="soil_type" class="form-control">
+                    <option value="" disabled selected>-- Choose Soil Type --</option>
+                    <option value="Clay">Clay</option>
+                    <option value="Sandy">Sandy</option>
+                    <option value="Black">Black</option>
+                    <option value="Alluvial">Alluvial</option>
+                    <option value="Chalky">Chalky</option>
+                    <option value="Loamy">Loamy</option>
+                </select>
+            </div>
             <div class="mb-3">
                 <label for="water_available" class="form-label">Water Available (Liters)</label>
                 {{ form.water_available }}
