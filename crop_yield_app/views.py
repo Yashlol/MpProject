@@ -1,49 +1,34 @@
-import cvxpy as cp
 import numpy as np
+import joblib
 from django.shortcuts import render
-from .forms import CropForm
-from .models import Crop
+from .forms import CropPredictionForm
 
+# Load the trained model
+MODEL_PATH = "C:\\Users\\Yash\\OneDrive\\Desktop\\Django\\MpProject\\crop_yield_app\\crop_model.pkl"
+soil_model = joblib.load(MODEL_PATH)
 
-
-def recommend_crops(request):
+def predict_soil_type(request):
     if request.method == 'POST':
-        form = CropForm(request.POST)
+        form = CropPredictionForm(request.POST)
         if form.is_valid():
-            soil = form.cleaned_data['soil_type']
-            water = form.cleaned_data['water_available']
-            budget = form.cleaned_data['budget']
+            # Extract user inputs
+            temperature = form.cleaned_data['temperature']
+            humidity = form.cleaned_data['humidity']
+            moisture = form.cleaned_data['moisture']
+            nitrogen = form.cleaned_data['nitrogen']
+            phosphorus = form.cleaned_data['phosphorus']
+            potassium = form.cleaned_data['potassium']
+            fertilizer_name = form.cleaned_data['fertilizer_name']  # If needed
 
-            # Get crop data from database
-            crops = Crop.objects.filter(soil_type=soil)
+            # Convert input to numpy array (ensure it matches model training format)
+            input_data = np.array([[temperature, humidity, moisture, nitrogen, phosphorus, potassium]])
 
-            # Convert to lists
-            costs = np.array([crop.cost for crop in crops])
-            water_needs = np.array([crop.water_needed for crop in crops])
-            yields = np.array([crop.expected_yield for crop in crops])
+            # Predict soil type
+            predicted_soil = soil_model.predict(input_data)[0]  # Assuming model outputs a label
 
-            # Define variables (Binary: 0 or 1 for each crop)
-            x = cp.Variable(len(crops), boolean=True)
-
-            # Objective: Maximize total yield
-            objective = cp.Maximize(cp.sum(cp.multiply(yields, x)))
-
-            # Constraints
-            constraints = [
-                cp.sum(cp.multiply(costs, x)) <= budget,  # Budget limit
-                cp.sum(cp.multiply(water_needs, x)) <= water  # Water limit
-            ]
-
-            # Solve the optimization problem
-            prob = cp.Problem(objective, constraints)
-            prob.solve()
-
-            # Get recommended crops
-            selected_crops = [crops[i].name for i in range(len(crops)) if x.value[i] > 0.5]
-
-            return render(request, 'crop_yield_app/results.html', {'crops': selected_crops})
+            return render(request, 'crop_yield_app/results.html', {'predicted_soil': predicted_soil})
 
     else:
-        form = CropForm()
+        form = CropPredictionForm()
 
     return render(request, 'crop_yield_app/form.html', {'form': form})

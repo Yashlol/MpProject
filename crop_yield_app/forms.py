@@ -1,22 +1,31 @@
 from django import forms
-from .models import Crop
 
-class CropForm(forms.Form):
-    soil_type = forms.CharField(label="Soil Type", max_length=100)
-    water_available = forms.FloatField(label="Water Available (Liters per acre)")
-    budget = forms.FloatField(label="Budget per acre")
-
-
-SOIL_CHOICES = [
-    ('Loamy', 'Loamy'),
-    ('Clayey', 'Clayey'),
-    ('Sandy', 'Sandy'),
-    ('Alluvial', 'Alluvial'),
-    ('Black', 'Black'),
-    ('Arid', 'Arid'),
-]
-
-class CropRecommendationForm(forms.Form):
-    soil_type = forms.ChoiceField(choices=SOIL_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
-    water_available = forms.IntegerField(widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Water in liters'}))
-    budget = forms.IntegerField(widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Budget in currency'}))
+class CropPredictionForm(forms.Form):
+    temperature = forms.FloatField(
+        label="Temperature (°C)",
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter temperature in °C'})
+    )
+    humidity = forms.FloatField(
+        label="Humidity (%)",
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter humidity in %'})
+    )
+    moisture = forms.FloatField(
+        label="Soil Moisture (%)",
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter soil moisture in %'})
+    )
+    nitrogen = forms.FloatField(
+        label="Nitrogen Level",
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter nitrogen level'})
+    )
+    phosphorus = forms.FloatField(
+        label="Phosphorus Level",
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter phosphorus level'})
+    )
+    potassium = forms.FloatField(
+        label="Potassium Level",
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter potassium level'})
+    )
+    fertilizer_name = forms.CharField(
+        label="Fertilizer Name",
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter fertilizer name'})
+    )
