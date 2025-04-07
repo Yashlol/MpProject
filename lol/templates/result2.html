@@ -7,7 +7,7 @@
     <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         body {
-            font-family: "Times New Roman", Times, serif;
+            font-family: "Inter", Times, serif;
             background-color: #111827;
             color: #f3f4f6;
             padding: 2rem;
@@ -78,7 +78,21 @@
 </head>
 <body>
     <div class="container">
-        <h1>Simplex Method Solver</h1>
+        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 2.5rem;">
+            <i class="fas fa-truck" style="color: #3b82f6; font-size: 2rem; margin-bottom: 0.5rem;"></i>
+            <h2 style="
+                font-size: 2rem;
+                font-weight: 700;
+                background: linear-gradient(to right, #3b82f6, #10b981);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin: 0;
+                text-align: center;
+            ">
+                Simplex Method Solver
+            </h2>
+        </div>
+        
         <form id="simplexForm" method="post" action="{% url 'simplex_method' %}">
             {% csrf_token %}
             <label for="optimization_type">Optimization Type:</label>
@@ -92,6 +106,7 @@
 
             <div id="constraints">
                 <h2>Constraints</h2>
+
                 <div class="constraint">
                     <label>Constraint 1: Coefficients (comma separated):</label>
                     <input type="text" name="constraint_1[]" placeholder="e.g., 1,1" required value="{{ request.POST.constraint_1.0 }}">
@@ -103,6 +118,7 @@
                     <label>Right-hand side:</label>
                     <input type="text" name="constraint_1[]" placeholder="e.g., 4" required value="{{ request.POST.constraint_1.2 }}">
                 </div>
+
                 <div class="constraint">
                     <label>Constraint 2: Coefficients (comma separated):</label>
                     <input type="text" name="constraint_2[]" placeholder="e.g., 2,1" required value="{{ request.POST.constraint_2.0 }}">
@@ -115,6 +131,7 @@
                     <input type="text" name="constraint_2[]" placeholder="e.g., 5" required value="{{ request.POST.constraint_2.2 }}">
                 </div>
             </div>
+
             <button type="button" onclick="addConstraint()">Add Constraint</button>
             <br>
             <button type="submit">Solve Problem</button>
@@ -127,21 +144,23 @@
         {% if optimal_point %}
             <div class="result">
                 <h2>Solution:</h2>
-                <p>Minimize: <br> 
+                <p>
+                    {% if optimization_type == "maximize" %}Maximize{% else %}Minimize{% endif %}: <br>
                     \( Z = {% for coef in objective_function %}{{ coef }}x_{{ forloop.counter }}{% if not forloop.last %} + {% endif %}{% endfor %} \)
                 </p>
                 <p>Subject to:</p>
                 {% for constraint in constraints %}
-                    <p>\( {% for coef in constraint.coefficients %}{{ coef }}x_{{ forloop.counter }}{% if not forloop.last %} + {% endif %}{% endfor %} {{ constraint.inequality }} {{ constraint.rhs }} \)</p>
+                    <p>
+                        \( {% for coef in constraint.coefficients %}{{ coef }}x_{{ forloop.counter }}{% if not forloop.last %} + {% endif %}{% endfor %} {{ constraint.inequality }} {{ constraint.rhs }} \)
+                    </p>
                 {% endfor %}
                 <p>\( x_1, x_2 \geq 0 \)</p>
-
-                <h3>Solution:</h3>
+                <h3>Optimal Solution:</h3>
                 <p><strong>\( x_1 = {{ optimal_point.0 }}, x_2 = {{ optimal_point.1 }}, Z = {{ optimal_value }} \)</strong></p>
             </div>
         {% endif %}
     </div>
-    
+
     <script>
         let constraintCount = 2;
         function addConstraint() {

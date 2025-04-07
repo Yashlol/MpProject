@@ -26,15 +26,15 @@ def graphical_method_view(request):
                 objective_coefficients, np.array(A), np.array(b), constraints, optimization_type
             )
 
-            return render(request, 'result.html', {
+            return render(request, 'graphical.html', {
                 'optimal_point': optimal_point,
                 'optimal_value': optimal_value,
                 'graph_image': graph_image,
             })
         except ValueError as e:
-            return render(request, 'result.html', {'error_message': str(e)})
+            return render(request, 'graphical.html', {'error_message': str(e)})
 
-    return render(request, 'result.html')
+    return render(request, 'graphical.html')
 
 def parse_constraints(request):
     constraints = []
@@ -474,3 +474,130 @@ def solve_transportation_problem(cost_matrix, supply, demand):
             "status": str(e)
         }
 
+def knapsack_solver(request):
+    result = None
+    if request.method == 'POST':
+        try:
+            values = list(map(int, request.POST.get('values').split(',')))
+            weights = list(map(int, request.POST.get('weights').split(',')))
+            capacity = int(request.POST.get('capacity'))
+
+            n = len(values)
+            dp = [[0] * (capacity + 1) for _ in range(n + 1)]
+
+            # Dynamic programming to solve 0/1 knapsack
+            for i in range(1, n + 1):
+                for w in range(capacity + 1):
+                    if weights[i - 1] <= w:
+                        dp[i][w] = max(dp[i - 1][w], dp[i - 1][w - weights[i - 1]] + values[i - 1])
+                    else:
+                        dp[i][w] = dp[i - 1][w]
+
+            # Backtrack to find selected items
+            selected_items = []
+            w = capacity
+            for i in range(n, 0, -1):
+                if dp[i][w] != dp[i - 1][w]:
+                    selected_items.append(i - 1)
+                    w -= weights[i - 1]
+
+            result = {
+                'items': list(reversed(selected_items)),
+                'value': dp[n][capacity]
+            }
+
+        except Exception as e:
+            result = {'items': [], 'value': 0, 'error': str(e)}
+
+    return render(request, 'knapsack.html', {'result': result})
+
+"""
+
+
+
+
+
+
+All of this is genetic algorithm
+
+
+
+
+
+
+
+"""
+from django.shortcuts import render
+import random
+
+# Helper functions
+def fitness(individual):
+    # Basic fitness: maximize number of 1s
+    return sum(individual)
+
+def selection(population):
+    return sorted(population, key=fitness, reverse=True)[:2]
+
+def crossover(parent1, parent2, crossover_rate):
+    if random.random() < crossover_rate:
+        point = random.randint(1, len(parent1)-1)
+        child1 = parent1[:point] + parent2[point:]
+        child2 = parent2[:point] + parent1[point:]
+        return child1, child2
+    else:
+        return parent1[:], parent2[:]
+
+def mutate(individual, mutation_rate):
+    return [bit if random.random() > mutation_rate else 1-bit for bit in individual]
+
+# Main view
+def genetic_algorithm(request):
+    if request.method == 'POST':
+        # Collect form inputs
+        gene_length = int(request.POST.get('gene_length'))
+        pop_size = int(request.POST.get('population_size'))
+        generations = int(request.POST.get('generations'))
+        crossover_rate = float(request.POST.get('crossover_rate'))
+        mutation_rate = float(request.POST.get('mutation_rate'))
+
+        # Initialize population with random 0s and 1s
+        population = [
+            [random.randint(0, 1) for _ in range(gene_length)]
+            for _ in range(pop_size)
+        ]
+
+        # Track the best solution
+        best_individual = None
+        best_fitness = 0
+        history = []
+
+        for gen in range(generations):
+            # Evaluate fitness
+            population = sorted(population, key=fitness, reverse=True)
+            best_candidate = population[0]
+            current_fitness = fitness(best_candidate)
+            history.append({'generation': gen+1, 'best': best_candidate, 'fitness': current_fitness})
+
+            if current_fitness > best_fitness:
+                best_fitness = current_fitness
+                best_individual = best_candidate
+
+            # Create next generation
+            next_generation = []
+
+            while len(next_generation) < pop_size:
+                parent1, parent2 = selection(population)
+                child1, child2 = crossover(parent1, parent2, crossover_rate)
+                next_generation.append(mutate(child1, mutation_rate))
+                if len(next_generation) < pop_size:
+                    next_generation.append(mutate(child2, mutation_rate))
+
+            population = next_generation
+
+        return render(request, 'genetic_algorithm.html', {
+            'best_individual': best_individual,
+            'best_fitness': best_fitness,
+            'history': history,
+        })
+
+    return render(request, 'genetic_algorithm.html')

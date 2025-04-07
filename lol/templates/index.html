@@ -2,298 +2,145 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Mathematical Programming Methods</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mathematical Programming</title>
-    <!-- Add GSAP for animations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous" defer></script>
     <style>
-        :root {
-            --primary-color: #3b82f6;
-            --primary-dark: #2563eb;
-            --secondary-color: #10b981;
-            --secondary-dark: #059669;
-            --background-dark: #111827;
-            --background-card: #1f2937;
-            --text-light: #f3f4f6;
-            --text-gray: #9ca3af;
-            --border-color: #374151;
-            --hover-color: #4b5563;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            line-height: 1.6;
-            background-color: var(--background-dark);
-            color: var(--text-light);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin: 0;
             padding: 2rem;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #0f172a, #1e3a8a);
+            color: #f1f5f9;
         }
 
         .container {
-            max-width: 1200px;
-            width: 100%;
-            padding: 2rem;
-            background: var(--background-card);
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--border-color);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            max-width: 1000px;
+            margin: auto;
         }
 
-        .container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        .methods-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .method-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .method-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .method-title {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .method-description {
+            font-size: 0.95rem;
+            margin-bottom: 1.2rem;
+            color: #cbd5e1;
+        }
+
+        .button {
+            background: linear-gradient(to right, #3b82f6, #10b981);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.5);
         }
 
         h1 {
             font-size: 2.5rem;
             font-weight: 700;
-            color: var(--text-light);
-            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #3b82f6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             text-align: center;
+            margin: 0;
         }
 
-        .methods-container {
-            display: grid;
-            gap: 1.5rem;
-            margin-top: 2rem;
+        i.fas {
+            font-size: 2.5rem;
+            color: #10b981;
+            margin-bottom: 0.5rem;
         }
 
-        .method-card {
-            background: rgba(31, 41, 55, 0.7);
-            backdrop-filter: blur(5px);
-            border: 1px solid var(--border-color);
-            opacity: 0;
-            transform: translateY(20px);
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .method-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-        }
-
-        .method-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--text-light);
-        }
-
-        .method-description {
-            color: var(--text-gray);
-            margin-bottom: 1.5rem;
-        }
-
-        .button {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            background-color: var(--primary-color);
-            color: white;
-            text-decoration: none;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            transition: background-color 0.3s ease;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .button:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .button::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 300px;
-            height: 300px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            transition: transform 0.5s ease;
-        }
-
-        .button:hover::after {
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        /* Loading animation */
-        .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--background-dark);
+        .header {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            z-index: 1000;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid var(--border-color);
-            border-top-color: var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Add new styles */
-        .background-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-
-        .moving-shape {
-            position: absolute;
-            border-radius: 50%;
-            background: linear-gradient(45deg, rgba(37, 99, 235, 0.1), rgba(5, 150, 105, 0.1));
-            filter: blur(40px);
-            animation: float 20s infinite;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        @keyframes float {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            33% { transform: translate(100px, 100px) rotate(120deg); }
-            66% { transform: translate(-50px, 200px) rotate(240deg); }
-            100% { transform: translate(0, 0) rotate(360deg); }
+            margin-bottom: 2.5rem;
         }
     </style>
 </head>
 <body>
-    <!-- Add loading screen -->
-    <div class="loading">
-        <div class="loading-spinner"></div>
-    </div>
-
-    <!-- Add animated background -->
-    <div class="background-animation">
-        <div class="moving-shape"></div>
-        <div class="moving-shape"></div>
-        <div class="moving-shape"></div>
-    </div>
-
     <div class="container">
-        <h1>Mathematical Programming Methods</h1>
+        <!-- Header section with icon -->
+        <div class="header">
+            <i class="fas fa-cogs" loading="lazy"></i>
+            <h1>Mathematical Programming Methods</h1>
+        </div>
+
         <div class="methods-container">
-            <div class="method-card">
+            <div class="method-card" loading="lazy">
                 <h2 class="method-title">Graphical Method</h2>
-                <p class="method-description">
-                    Solve linear programming problems visually using a graphical approach. 
-                    Perfect for problems with two variables.
-                </p>
+                <p class="method-description">Solve linear programming problems visually using a graphical approach.</p>
                 <form action="{% url 'graphical_method' %}" method="get">
                     <button type="submit" class="button">Use Graphical Method</button>
                 </form>
             </div>
-            <div class="method-card">
+            <div class="method-card" loading="lazy">
                 <h2 class="method-title">Simplex Method</h2>
-                <p class="method-description">
-                    Solve complex linear programming problems with multiple variables using the simplex algorithm.
-                </p>
+                <p class="method-description">Solve complex linear programming problems with the simplex algorithm.</p>
                 <form action="{% url 'simplex_method' %}" method="get">
                     <button type="submit" class="button">Use Simplex Method</button>
                 </form>
             </div>
-            <div class="method-card">
+            <div class="method-card" loading="lazy">
                 <h2 class="method-title">Transportation Problem</h2>
-                <p class="method-description">
-                    Solve transportation optimization problems to minimize total shipping costs between sources and destinations.
-                </p>
+                <p class="method-description">Optimize transportation to minimize total costs.</p>
                 <form action="{% url 'transportation_method' %}" method="get">
                     <button type="submit" class="button">Use Transportation Method</button>
                 </form>
             </div>
-            <div class="method-card">
-                <h2 class="method-title">Crop Yield Optimization</h2>
-                <p class="method-description">
-                    lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                </p>
-                <form action="{% url 'recommend_crops' %}" method="get">
-                    <button type="submit" class="button">Use Transportation Method</button>
+            <div class="method-card" loading="lazy">
+                <h2 class="method-title">Knapsack Problem</h2>
+                <p class="method-description">Select items to maximize value within weight constraints.</p>
+                <form action="{% url 'knapsack' %}" method="get">
+                    <button type="submit" class="button">Use Knapsack Method</button>
+                </form>
+            </div>
+            <div class="method-card" loading="lazy">
+                <h2 class="method-title">Genetic algorithm Problem</h2>
+                <p class="method-description">Select items to maximize value within weight constraints.</p>
+                <form action="{% url 'genetic_algorithm' %}" method="get">
+                    <button type="submit" class="button">Use Genetic algo Method</button>
                 </form>
             </div>
         </div>
     </div>
-
-    <script>
-        // Initialize animated background
-        document.querySelectorAll('.moving-shape').forEach((shape, index) => {
-            shape.style.width = Math.random() * 400 + 200 + 'px';
-            shape.style.height = shape.style.width;
-            shape.style.left = Math.random() * 100 + 'vw';
-            shape.style.top = Math.random() * 100 + 'vh';
-            shape.style.animationDelay = index * -5 + 's';
-            setTimeout(() => shape.style.opacity = 0.5, 100);
-        });
-
-        // Page load animation
-        window.addEventListener('load', () => {
-            // Hide loading screen
-            document.querySelector('.loading').style.display = 'none';
-
-            // Animate cards
-            gsap.to('.method-card', {
-                opacity: 1,
-                y: 0,
-                duration: 0.8,
-                stagger: 0.2,
-                ease: 'power2.out'
-            });
-
-            // Animate container
-            gsap.from('.container', {
-                opacity: 0,
-                scale: 0.95,
-                duration: 1,
-                ease: 'power2.out'
-            });
-        });
-
-        // Parallax effect on mouse move
-        document.addEventListener('mousemove', (e) => {
-            const shapes = document.querySelectorAll('.moving-shape');
-            const x = e.clientX / window.innerWidth;
-            const y = e.clientY / window.innerHeight;
-
-            shapes.forEach((shape, index) => {
-                const speed = (index + 1) * 20;
-                const xOffset = (x - 0.5) * speed;
-                const yOffset = (y - 0.5) * speed;
-                shape.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
-            });
-        });
-    </script>
 </body>
 </html>

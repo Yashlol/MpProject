@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transportation Problem Solver</title>
+    <title>Transportation Problem</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -19,28 +19,28 @@
         }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             background-color: var(--background-dark);
             color: var(--text-light);
-            line-height: 1.6;
-            padding: 2rem;
             margin: 0;
+            padding: 2rem;
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
-            background: var(--background-card);
+            background-color: var(--background-card);
             padding: 2rem;
-            border-radius: 8px;
+            border-radius: 12px;
             box-shadow: var(--shadow-md);
             border: 1px solid var(--border-color);
         }
 
         h1 {
             text-align: center;
-            color: var(--text-light);
             margin-bottom: 2rem;
+            font-size: 2rem;
+            color: var(--text-light);
         }
 
         .form-group {
@@ -50,7 +50,7 @@
         label {
             display: block;
             margin-bottom: 0.5rem;
-            color: var(--text-light);
+            font-weight: 500;
         }
 
         input[type="text"] {
@@ -58,9 +58,9 @@
             padding: 0.75rem;
             background-color: var(--background-dark);
             border: 1px solid var(--border-color);
-            border-radius: 4px;
-            color: var(--text-light);
+            border-radius: 6px;
             font-size: 1rem;
+            color: var(--text-light);
         }
 
         input[type="text"]:focus {
@@ -74,18 +74,23 @@
             margin-top: 0.25rem;
         }
 
-        button {
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background-color: var(--primary-color);
             color: white;
-            padding: 0.75rem 1.5rem;
+            padding: 0.75rem;
             border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            border-radius: 6px;
             font-size: 1rem;
-            transition: background-color 0.3s;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            margin-top: 1rem;
         }
 
-        button:hover {
+        .btn:hover {
             background-color: var(--primary-hover);
         }
 
@@ -93,59 +98,14 @@
             background-color: rgba(239, 68, 68, 0.2);
             color: #fca5a5;
             padding: 1rem;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-        }
-
-        .back-button {
-            display: inline-block;
-            margin-top: 1rem;
-            color: var(--text-gray);
-            text-decoration: none;
-        }
-
-        .back-button:hover {
-            color: var(--text-light);
-        }
-
-        /* Add result section styles */
-        .result-section {
-            margin: 2rem 0;
-            padding: 1rem;
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
-            display: none; /* Hidden by default */
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-            background: var(--background-card);
-        }
-
-        th, td {
-            padding: 0.75rem;
-            text-align: center;
-            border: 1px solid var(--border-color);
-        }
-
-        th {
-            background-color: rgba(59, 130, 246, 0.2);
-        }
-
-        .total-cost {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: var(--primary-color);
-            margin: 1rem 0;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
         }
 
         .loading {
             display: none;
             text-align: center;
-            margin: 1rem 0;
+            margin-top: 1rem;
         }
 
         .loading-spinner {
@@ -162,44 +122,97 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .result-section {
+            background-color: rgba(59, 130, 246, 0.1);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 1rem;
+            border-collapse: collapse;
+            background-color: var(--background-dark);
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        th {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .total-cost {
+            margin-top: 1rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            color: var(--text-gray);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            color: var(--text-light);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Transportation Problem Solver</h1>
+        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 2.5rem;">
+            <i class="fas fa-truck" style="color: #3b82f6; font-size: 2rem; margin-bottom: 0.5rem;"></i>
+            <h2 style="
+                font-size: 2rem;
+                font-weight: 700;
+                background: linear-gradient(to right, #3b82f6, #10b981);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin: 0;
+                text-align: center;
+            ">
+                Transportation Problem Solver
+            </h2>
+        </div>
         
+
         {% if error_message %}
         <div class="error">
-            <i class="fas fa-exclamation-circle"></i> {{ error_message }}
+            <i class="fas fa-exclamation-triangle"></i> {{ error_message }}
         </div>
         {% endif %}
 
         <form id="transportationForm" method="post">
             {% csrf_token %}
-            
             <div class="form-group">
                 <label for="supply">Supply Points:</label>
-                <input type="text" id="supply" name="supply" required 
-                       placeholder="e.g., 20, 30, 25">
-                <p class="help-text">Enter comma-separated supply values</p>
+                <input type="text" name="supply" id="supply" placeholder="e.g., 20, 30, 25" required>
+                <p class="help-text">Enter comma-separated supply values.</p>
             </div>
 
             <div class="form-group">
                 <label for="demand">Demand Points:</label>
-                <input type="text" id="demand" name="demand" required 
-                       placeholder="e.g., 10, 25, 40">
-                <p class="help-text">Enter comma-separated demand values</p>
+                <input type="text" name="demand" id="demand" placeholder="e.g., 10, 25, 40" required>
+                <p class="help-text">Enter comma-separated demand values.</p>
             </div>
 
             <div class="form-group">
                 <label for="cost_matrix">Cost Matrix:</label>
-                <input type="text" id="cost_matrix" name="cost_matrix" required 
-                       placeholder="e.g., 2,3,1; 5,4,8; 5,6,8">
-                <p class="help-text">Enter cost matrix with rows separated by semicolons and columns by commas</p>
+                <input type="text" name="cost_matrix" id="cost_matrix" placeholder="e.g., 2,3,1; 5,4,8; 5,6,8" required>
+                <p class="help-text">Rows separated by semicolons, columns by commas.</p>
             </div>
 
-            <button type="submit">
-                <i class="fas fa-calculator"></i> Solve Problem
+            <button type="submit" class="btn">
+                <i class="fas fa-calculator"></i>&nbsp; Solve
             </button>
         </form>
 
@@ -209,7 +222,7 @@
         </div>
 
         {% if optimal_solution %}
-        <div class="result-section" style="display: block;">
+        <div class="result-section">
             <h2>Optimal Solution</h2>
             <table>
                 <thead>
@@ -241,20 +254,20 @@
                 </tbody>
             </table>
 
-            <p class="total-cost">Total Transportation Cost: {{ total_cost|floatformat:2 }}</p>
+            <p class="total-cost">Total Cost: ₹{{ total_cost|floatformat:2 }}</p>
             <p>Status: {{ status }}</p>
         </div>
         {% endif %}
 
-        <a href="/" class="back-button">
+        <a href="/" class="back-link">
             <i class="fas fa-arrow-left"></i> Back to Home
         </a>
     </div>
 
     <script>
-        document.getElementById('transportationForm').addEventListener('submit', function(e) {
+        document.getElementById('transportationForm').addEventListener('submit', function () {
             document.querySelector('.loading').style.display = 'block';
         });
     </script>
 </body>
-</html> 
+</html>

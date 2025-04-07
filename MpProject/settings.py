@@ -38,10 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'lol',
-    'crop_yield_app'
 ]
 
-# filepath: /c:/Users/Yash/OneDrive/Desktop/Django/MpProject/MpProject/settings.py
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Add WhiteNoise middleware here
@@ -67,7 +65,7 @@ ROOT_URLCONF = 'MpProject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'lol', 'templates')], 
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
