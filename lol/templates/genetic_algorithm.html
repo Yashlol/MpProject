@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #6366f1;
-            --accent: #f472b6;
+            --primary: #3b82f6;
+            --accent: #10b981;
             --background: #0f172a;
             --card-bg: rgba(255, 255, 255, 0.07);
             --text: #e2e8f0;
@@ -87,7 +87,7 @@
 
         .button:hover {
             transform: scale(1.05);
-            background: linear-gradient(90deg, #4338ca, var(--accent));
+            background: linear-gradient(90deg, var(--primary-hover), var(--accent));
         }
 
         .results {
@@ -112,19 +112,19 @@
         <form method="POST">
             {% csrf_token %}
             <label>Gene Length</label>
-            <input type="number" name="gene_length" min="4" max="64" value="10" required>
+            <input type="number" name="gene_length" min="4" max="64" placeholder="e.g., 10" required>
 
             <label>Population Size</label>
-            <input type="number" name="population_size" min="2" max="100" value="20" required>
+            <input type="number" name="population_size" min="2" max="100" placeholder="e.g., 20" required>
 
             <label>Generations</label>
-            <input type="number" name="generations" min="1" max="500" value="50" required>
+            <input type="number" name="generations" min="1" max="500" placeholder="e.g., 50" required>
 
             <label>Crossover Rate: <span id="cr_val">0.7</span></label>
             <input type="range" name="crossover_rate" min="0" max="1" step="0.01" value="0.7" oninput="cr_val.innerText=this.value">
 
-            <label>Mutation Rate: <span id="mr_val">0.01</span></label>
-            <input type="range" name="mutation_rate" min="0" max="1" step="0.01" value="0.01" oninput="mr_val.innerText=this.value">
+            <label>Mutation Rate: <span id="mr_val">0.3</span></label>
+            <input type="range" name="mutation_rate" min="0" max="1" step="0.01" value="0.3" oninput="mr_val.innerText=this.value">
 
             <button type="submit" class="button">Run Genetic Algorithm</button>
         </form>
@@ -142,9 +142,10 @@
     {% if history %}
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const labels = {{ history|map(attribute="generation")|list|safe }};
-            const data = {{ history|map(attribute="fitness")|list|safe }};
-
+            const labels = {{ labels|safe }};
+            const data = {{ fitness_data|safe }};
+            const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    
             const ctx = document.getElementById('fitnessChart');
             new Chart(ctx, {
                 type: 'line',
@@ -154,8 +155,8 @@
                         label: 'Fitness Over Generations',
                         data: data,
                         fill: false,
-                        borderColor: '#f472b6',
-                        backgroundColor: '#f472b6',
+                        borderColor: accentColor,
+                        backgroundColor: accentColor,
                         tension: 0.3,
                         pointRadius: 3,
                     }]
@@ -176,7 +177,7 @@
                 }
             });
         });
-    </script>
+    </script>    
     {% endif %}
 </body>
 </html>

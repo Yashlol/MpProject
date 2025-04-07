@@ -531,6 +531,9 @@ from django.shortcuts import render
 import random
 
 # Helper functions
+import random
+from django.shortcuts import render
+
 def fitness(individual):
     # Basic fitness: maximize number of 1s
     return sum(individual)
@@ -566,13 +569,11 @@ def genetic_algorithm(request):
             for _ in range(pop_size)
         ]
 
-        # Track the best solution
         best_individual = None
         best_fitness = 0
         history = []
 
         for gen in range(generations):
-            # Evaluate fitness
             population = sorted(population, key=fitness, reverse=True)
             best_candidate = population[0]
             current_fitness = fitness(best_candidate)
@@ -582,7 +583,6 @@ def genetic_algorithm(request):
                 best_fitness = current_fitness
                 best_individual = best_candidate
 
-            # Create next generation
             next_generation = []
 
             while len(next_generation) < pop_size:
@@ -594,10 +594,16 @@ def genetic_algorithm(request):
 
             population = next_generation
 
+        # Extract labels and fitness values for chart rendering
+        labels = [h['generation'] for h in history]
+        fitness_data = [h['fitness'] for h in history]
+
         return render(request, 'genetic_algorithm.html', {
             'best_individual': best_individual,
             'best_fitness': best_fitness,
             'history': history,
+            'labels': labels,
+            'fitness_data': fitness_data,
         })
 
     return render(request, 'genetic_algorithm.html')
