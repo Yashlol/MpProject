@@ -199,34 +199,35 @@ SIMPLEX STARTS FROM HERE!!
 1
 '''
 
+def generate_dual_problem(c, A, b):
+    A_dual = A.T
+    b_dual = c
+    c_dual = b
+    return c_dual, A_dual, b_dual
 def simplex_method_view(request):
     if request.method == 'POST':
         try:
-            # Get optimization type (default is 'maximize')
             optimization_type = request.POST.get('optimization_type', 'maximize')
-            
-            # Retrieve and parse the objective function (comma-separated string)
+            solve_dual = request.POST.get('solve_dual') == 'on'
+
             objective_function_input = request.POST.get('objective_function', '').strip()
             if not objective_function_input:
                 raise ValueError("Objective function cannot be empty.")
             objective_function_list = [float(x) for x in objective_function_input.split(',')]
-            
-            # Parse constraints (get A, b for solver and original data for display)
+
             A_list, b_list, constraints_data = parse_constraints_simplex(request)
             A = np.array(A_list)
             b = np.array(b_list)
-            
-            # Solve using linprog (which minimizes by default)
+
+            # Solve primal
             if optimization_type == 'maximize':
-                # For maximization, multiply the objective by -1,
-                # then multiply the resulting optimal value by -1 to recover the maximum.
                 result = linprog([-coef for coef in objective_function_list],
                                  A_ub=A, b_ub=b, method="highs")
                 if not result.success:
                     raise ValueError("No optimal solution found.")
                 solution = result.x
                 optimal_value = -result.fun
-            else:  # minimize
+            else:
                 result = linprog(objective_function_list,
                                  A_ub=A, b_ub=b, method="highs")
                 if not result.success:
@@ -234,11 +235,26 @@ def simplex_method_view(request):
                 solution = result.x
                 optimal_value = result.fun
 
+            dual_solution = None
+            dual_optimal = None
+            if solve_dual:
+                # Generate and solve dual
+                c_dual, A_dual, b_dual = generate_dual_problem(np.array(objective_function_list), A, b)
+                result_dual = linprog(c_dual, A_ub=-A_dual, b_ub=-b_dual, method="highs")
+                if result_dual.success:
+                    dual_solution = result_dual.x
+                    dual_optimal = result_dual.fun
+                else:
+                    raise ValueError("Dual problem could not be solved.")
+
             context = {
-                'objective_function': objective_function_list,  # For display in template
-                'constraints': constraints_data,                # Original constraint data
+                'objective_function': objective_function_list,
+                'constraints': constraints_data,
                 'optimal_point': solution.tolist(),
                 'optimal_value': optimal_value,
+                'dual_solution': dual_solution.tolist() if dual_solution is not None else None,
+                'dual_optimal': dual_optimal,
+                'dual_solved': solve_dual,
             }
             return render(request, 'result2.html', context)
         except ValueError as e:

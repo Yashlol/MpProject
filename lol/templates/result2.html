@@ -98,11 +98,15 @@
             <label for="optimization_type">Optimization Type:</label>
             <select name="optimization_type" id="optimization_type">
                 <option value="maximize" {% if request.POST.optimization_type == "maximize" %}selected{% endif %}>Maximize</option>
-                <option value="minimize" {% if request.POST.optimization_type == "minimize" %}selected{% endif %}>Minimize</option>
             </select>
 
             <label for="objective_function">Objective Function Coefficients (comma separated):</label>
             <input type="text" name="objective_function" id="objective_function" placeholder="e.g., 3,2" required value="{{ request.POST.objective_function }}">
+
+            <label>
+                <input type="checkbox" name="solve_dual" {% if request.POST.solve_dual %}checked{% endif %}>
+                Solve Dual Problem
+            </label>
 
             <div id="constraints">
                 <h2>Constraints</h2>
@@ -157,6 +161,19 @@
                 <p>\( x_1, x_2 \geq 0 \)</p>
                 <h3>Optimal Solution:</h3>
                 <p><strong>\( x_1 = {{ optimal_point.0 }}, x_2 = {{ optimal_point.1 }}, Z = {{ optimal_value }} \)</strong></p>
+            </div>
+        {% endif %}
+
+        {% if dual_solved %}
+            <div class="result">
+                <h2>Dual Problem Result:</h2>
+                <p><strong>Dual Variables:</strong> 
+                    {% for val in dual_solution %}
+                        \( y_{{ forloop.counter }} = {{ val }} \)
+                        {% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </p>
+                <p><strong>Dual Optimal Value:</strong> \( Z = {{ dual_optimal }} \)</p>
             </div>
         {% endif %}
     </div>
