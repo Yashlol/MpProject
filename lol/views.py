@@ -749,3 +749,30 @@ def branch_and_bound_view(request):
             })
 
     return render(request, "branch_and_bound_form.html")
+
+from sympy import symbols, Eq, diff, solve
+from django.shortcuts import render
+
+def kkt_solver(request):
+    result = None
+
+    if request.method == 'POST':
+        x, y, l = symbols('x y lambda')
+
+        obj_expr = request.POST['objective']
+        constraint_expr = request.POST['constraint']
+
+        # Convert strings to symbolic expressions
+        f = eval(obj_expr)  # Objective function
+        g = eval(constraint_expr)  # Constraint
+
+        # KKT conditions
+        L = f + l * g
+        dL_dx = diff(L, x)
+        dL_dy = diff(L, y)
+        dL_dl = g  # The constraint itself
+
+        solutions = solve([dL_dx, dL_dy, dL_dl], (x, y, l), dict=True)
+        result = solutions
+
+    return render(request, 'kkt_solver.html', {'result': result})

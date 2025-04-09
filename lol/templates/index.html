@@ -136,6 +136,14 @@
                     <button type="submit" class="button">Use Knapsack Method</button>
                 </form>
             </div>
+            
+            <div class="method-card" loading="lazy">
+                <h2 class="method-title">Karush-Kuhn-Tucker</h2>
+                <p class="method-description">Solve constrained optimization problems by applying KKT conditions to find the best solution under nonlinear constraints.</p>
+                <form action="{% url 'kkt' %}" method="get">
+                    <button type="submit" class="button">Use KKT</button>
+                </form>
+            </div>
 
             <div class="method-card" loading="lazy">
                 <h2 class="method-title">Genetic Algorithm Problem</h2>

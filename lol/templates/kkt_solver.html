@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKT Conditions Solver</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --secondary-color: #10b981;
+            --background-dark: #111827;
+            --background-card: #1f2937;
+            --text-light: #f3f4f6;
+            --border-color: #374151;
+            --error-color: #ef4444;
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.3);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--background-dark);
+            color: var(--text-light);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--background-card);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            color: var(--secondary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--background-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            color: var(--text-light);
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .result-section {
+            background-color: var(--secondary-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+
+        .result-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .result-section li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .result-heading {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .kkt-title {
+            color: var(--text-light);
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .solution-box {
+            background-color: var(--secondary-color);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+        }
+
+        .solution-box h4 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+            font-size: 1.125rem;
+        }
+
+        .solution-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .solution-box li i {
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            color: var(--text-gray);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-balance-scale"></i> KKT Conditions Solver</h1>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="objective">Objective Function (in terms of x, y):</label>
+                <input type="text" id="objective" name="objective" placeholder="e.g., x**2 + y**2">
+            </div>
+
+            <div class="form-group">
+                <label for="constraint">Constraint (in terms of x, y):</label>
+                <input type="text" id="constraint" name="constraint" placeholder="e.g., x + y - 1">
+            </div>
+
+            <button type="submit" class="btn">Solve</button>
+        </form>
+
+        {% if result %}
+        <div class="result-section">
+            <h2 class="result-heading">
+                <i class="fas fa-check-circle"></i> KKT Conditions and Optimal Solution
+            </h2>
+
+            <div>
+                <h3 class="kkt-title">Karush-Kuhn-Tucker (KKT) Conditions:</h3>
+                <ul>
+                    <li><strong>1. Stationarity:</strong> ∇f(x) + ∑ λ<sub>i</sub> ∇g<sub>i</sub>(x) = 0</li>
+                    <li><strong>2. Primal Feasibility:</strong> g<sub>i</sub>(x) ≤ 0, ∀i</li>
+                    <li><strong>3. Dual Feasibility:</strong> λ<sub>i</sub> ≥ 0, ∀i</li>
+                    <li><strong>4. Complementary Slackness:</strong> λ<sub>i</sub> · g<sub>i</sub>(x) = 0, ∀i</li>
+                </ul>
+            </div>
+
+            <div class="solution-box">
+                <h4>Optimal Solution:</h4>
+                <ul>
+                    {% for sol in result %}
+                    <li><i class="fas fa-check"></i>{{ sol }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
+    </div>
+</body>
+</html>
