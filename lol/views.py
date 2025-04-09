@@ -624,5 +624,128 @@ def genetic_algorithm(request):
 
     return render(request, 'genetic_algorithm.html')
 
-def agri_home(request):
-    return render(request, 'agri_home.html')
+
+
+import numpy as np
+from scipy.optimize import linprog
+from django.shortcuts import render
+import copy
+
+import numpy as np
+import copy
+from scipy.optimize import linprog
+from django.shortcuts import render
+
+def is_integer_array(arr):
+    return all(float(x).is_integer() for x in arr)
+
+def branch_and_bound(c, A, b):
+    best_solution = None
+    best_value = None
+    nodes = [(A, b)]  # Stack of subproblems
+
+    while nodes:
+        A_curr, b_curr = nodes.pop()
+        res = linprog(c=-np.array(c), A_ub=A_curr, b_ub=b_curr, method='highs')
+
+        if not res.success:
+            continue
+
+        x = res.x
+        val = -res.fun
+
+        if is_integer_array(x):
+            if best_value is None or val > best_value:
+                best_solution = x
+                best_value = val
+        else:
+            frac_indices = [i for i, xi in enumerate(x) if not float(xi).is_integer()]
+            if not frac_indices:
+                continue
+
+            idx = frac_indices[0]
+            floor_constraint = copy.deepcopy(A_curr)
+            ceil_constraint = copy.deepcopy(A_curr)
+
+            floor_b = copy.deepcopy(b_curr)
+            ceil_b = copy.deepcopy(b_curr)
+
+            new_row_floor = [0] * len(x)
+            new_row_floor[idx] = 1
+            floor_constraint = np.vstack([floor_constraint, new_row_floor])
+            floor_b.append(np.floor(x[idx]))
+
+            new_row_ceil = [0] * len(x)
+            new_row_ceil[idx] = -1
+            ceil_constraint = np.vstack([ceil_constraint, new_row_ceil])
+            ceil_b.append(-np.ceil(x[idx]))
+
+            nodes.append((floor_constraint, floor_b))
+            nodes.append((ceil_constraint, ceil_b))
+
+    return best_solution, best_value
+
+def run_branch_and_bound(c, A, b, signs):
+    # Handle inequalities if needed (currently only handles ≤)
+    # Convert all constraints to ≤ type if required
+    A_ub = []
+    b_ub = []
+
+    for i in range(len(signs)):
+        if signs[i] == "<=":
+            A_ub.append(A[i])
+            b_ub.append(b[i])
+        elif signs[i] == ">=":
+            A_ub.append([-a for a in A[i]])
+            b_ub.append(-b[i])
+        elif signs[i] == "=":
+            # Split into two inequalities
+            A_ub.append(A[i])
+            b_ub.append(b[i])
+            A_ub.append([-a for a in A[i]])
+            b_ub.append(-b[i])
+        else:
+            raise ValueError("Unsupported constraint sign.")
+
+    solution, value = branch_and_bound(c, A_ub, b_ub)
+
+    if solution is None:
+        return {"error": "No feasible integer solution found."}
+
+    return {
+        "optimal_solution": [round(val) for val in solution],
+        "optimal_value": round(value, 2)
+    }
+
+def branch_and_bound_view(request):
+    if request.method == "POST":
+        try:
+            # Get objective function coefficients
+            c = list(map(float, request.POST.get("objective_function").split(",")))
+
+            # Get constraints
+            A = []
+            b = []
+            signs = []
+
+            i = 1
+            while True:
+                coeffs = request.POST.getlist(f"constraint_{i}[]")
+                if not coeffs or len(coeffs) < 3:
+                    break
+                A.append(list(map(float, coeffs[0].split(","))))
+                signs.append(coeffs[1].strip())
+                b.append(float(coeffs[2]))
+                i += 1
+
+            result = run_branch_and_bound(c, A, b, signs)
+
+            return render(request, "branch_and_bound_form.html", {
+                "result": result
+            })
+        except Exception as e:
+            return render(request, "branch_and_bound_form.html", {
+                "error": str(e)
+            })
+
+    return render(request, "branch_and_bound_form.html")

@@ -112,6 +112,7 @@
                     <button type="submit" class="button">Use Graphical Method</button>
                 </form>
             </div>
+            
             <div class="method-card" loading="lazy">
                 <h2 class="method-title">Simplex Method</h2>
                 <p class="method-description">Solve complex linear programming problems with the simplex algorithm.</p>
@@ -119,6 +120,7 @@
                     <button type="submit" class="button">Use Simplex Method</button>
                 </form>
             </div>
+
             <div class="method-card" loading="lazy">
                 <h2 class="method-title">Transportation Problem</h2>
                 <p class="method-description">Optimize transportation to minimize total costs.</p>
@@ -126,6 +128,7 @@
                     <button type="submit" class="button">Use Transportation Method</button>
                 </form>
             </div>
+
             <div class="method-card" loading="lazy">
                 <h2 class="method-title">Knapsack Problem</h2>
                 <p class="method-description">Select items to maximize value within weight constraints.</p>
@@ -133,6 +136,7 @@
                     <button type="submit" class="button">Use Knapsack Method</button>
                 </form>
             </div>
+
             <div class="method-card" loading="lazy">
                 <h2 class="method-title">Genetic Algorithm Problem</h2>
                 <p class="method-description">Optimize solutions using natural selection principles to find the best combination under given constraints.</p>
@@ -140,13 +144,14 @@
                     <button type="submit" class="button">Use Genetic algo Method</button>
                 </form>
             </div>
+
             <div class="method-card" loading="lazy">
-                <h2 class="method-title">AgriOptimizer</h2>
-                <p class="method-description">    Solve real-life agricultural resource allocation problems using optimization algorithms like Knapsack, Simplex, and Genetic Algorithms to maximize crop profit under given constraints.</p>
-                <form action="{% url 'agri_home' %}" method="get">
-                    <button type="submit" class="button">AgriOptimizer</button>
+                <h2 class="method-title">Linear Programing</h2>
+                <p class="method-description">    Solve Branch and Bound.    </p>
+                <form action="{% url 'branch_and_bound_form' %}" method="get">
+                    <button type="submit" class="button">Use Linear programing</button>
                 </form>
-            </div>            
+            </div>    
         </div>
     </div>
 </body>
