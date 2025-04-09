@@ -7,5 +7,6 @@ urlpatterns = [
     path('simplex/', views.simplex_method_view, name='simplex_method'),
     path('transportation/', views.transportation_method_view, name='transportation_method'),
     path('knapsack/', views.knapsack_solver, name='knapsack'),
-     path('genetic-algorithm/', views.genetic_algorithm, name='genetic_algorithm'),
+    path('genetic-algorithm/', views.genetic_algorithm, name='genetic_algorithm'),
+    path('agri_home/', views.agri_home, name='agri_home'),
 ]

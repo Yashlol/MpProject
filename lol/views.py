@@ -623,3 +623,6 @@ def genetic_algorithm(request):
         })
 
     return render(request, 'genetic_algorithm.html')
+
+def agri_home(request):
+    return render(request, 'agri_home.html')
