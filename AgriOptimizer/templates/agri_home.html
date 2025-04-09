@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriOptimizer - Home{% endblock %}
+
+{% block content %}
+
+<section class="welcome-section">
+    <h2>Welcome to AgriOptimizer 🌱</h2>
+    <p>
+        This app is built to empower farmers and agri-planners to make informed decisions.  
+        Whether it's selecting the best crop for your soil, optimizing fertilizer use, or  
+        planning based on real-time weather and market data — AgriOptimizer is your smart assistant.
+    </p>
+</section>
+
+<section class="feature-section">
+    <h3>🌾 Start Optimizing Your Resources</h3>
+    <p>Select your optimization goal and input values below.</p>
+
+    <div class="slider-container">
+        <label for="profit">Target Profit:</label>
+        <input type="range" id="profit" name="profit" min="1000" max="10000" step="100">
+        <span id="profit-value">₹1000</span>
+    </div>
+
+    <div class="slider-container">
+        <label for="water">Water Limit (L):</label>
+        <input type="range" id="water" name="water" min="100" max="1000" step="10">
+        <span id="water-value">100L</span>
+    </div>
+
+    <div class="slider-container">
+        <label for="area">Available Land (Acres):</label>
+        <input type="range" id="area" name="area" min="1" max="50" step="1">
+        <span id="area-value">1 Acre</span>
+    </div>
+
+    <button class="button">Optimize</button>
+</section>
+
+<script>
+    const sliders = [
+        { id: 'profit', unit: '₹' },
+        { id: 'water', unit: 'L' },
+        { id: 'area', unit: ' Acre' }
+    ];
+    sliders.forEach(slider => {
+        const input = document.getElementById(slider.id);
+        const display = document.getElementById(`${slider.id}-value`);
+        input.addEventListener('input', () => {
+            display.textContent = `${slider.unit}${input.value}`;
+        });
+    });
+</script>
+
+{% endblock %}
+
