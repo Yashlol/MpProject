@@ -7,7 +7,7 @@ import base64
 from scipy.spatial import ConvexHull
 from matplotlib.patches import Polygon
 from scipy.optimize import linprog
-
+import requests
 
 def graphical_method_view(request):
     if request.method == 'POST':
@@ -776,3 +776,109 @@ def kkt_solver(request):
         result = solutions
 
     return render(request, 'kkt_solver.html', {'result': result})
+
+from django.conf import settings
+
+def simulated_annealing_view(request):
+    ...
+    context = {
+        "google_maps_api_key": settings.GOOGLE_MAPS_API_KEY,
+        
+    }
+    return render(request, "simulated_annealing.html", context)
+
+import json
+import math
+import random
+from django.shortcuts import render
+from django.conf import settings
+
+distance_cache = {}
+
+def distance(a, b):
+    # Create a unique key for the pair of coordinates
+    key = (a['lat'], a['lng'], b['lat'], b['lng'])
+
+    # Check if result is already cached
+    if key in distance_cache:
+        return distance_cache[key]
+
+    # Format coordinates for the API
+    origin = f"{a['lat']},{a['lng']}"
+    destination = f"{b['lat']},{b['lng']}"
+    api_key = settings.GOOGLE_MAPS_API_KEY
+
+    # Call the Distance Matrix API
+    url = (
+        f"https://maps.googleapis.com/maps/api/distancematrix/json"
+        f"?origins={origin}&destinations={destination}&key={api_key}"
+    )
+
+    try:
+        response = requests.get(url)
+        data = response.json()
+
+        if data["status"] == "OK":
+            element = data["rows"][0]["elements"][0]
+            if element["status"] == "OK":
+                distance_meters = element["distance"]["value"]
+                distance_km = distance_meters / 1000.0  # Convert meters to kilometers
+
+                # Cache and return the result
+                distance_cache[key] = distance_km
+                return distance_km
+            else:
+                print("API element error:", element["status"])
+        else:
+            print("API status error:", data["status"])
+
+    except Exception as e:
+        print("Error fetching distance from API:", e)
+
+    # Fallback in case of API error
+    return float("inf")
+
+def total_distance(route):
+    return sum(distance(route[i], route[i+1]) for i in range(len(route)-1))
+
+def simulated_annealing_solver(points, T=10000, alpha=0.995, stopping_T=1e-8):
+    current = points[:]
+    best = points[:]
+    current_cost = best_cost = total_distance(current)
+
+    while T > stopping_T:
+        i, j = sorted(random.sample(range(len(points)), 2))
+        candidate = current[:]
+        candidate[i], candidate[j] = candidate[j], candidate[i]
+
+        candidate_cost = total_distance(candidate)
+        if candidate_cost < current_cost or random.random() < math.exp((current_cost - candidate_cost) / T):
+            current = candidate
+            current_cost = candidate_cost
+            if current_cost < best_cost:
+                best = current
+                best_cost = current_cost
+
+        T *= alpha
+
+    return best, best_cost
+
+def route_optimizer(request):
+    result = None
+    if request.method == 'POST':
+        points_json = request.POST.get('waypoints')
+        if points_json:
+            points = json.loads(points_json)
+            if len(points) >= 2:
+                best_path, best_cost = simulated_annealing_solver(points)
+                result = {
+                    'path': best_path,
+                    'cost': round(best_cost, 4)
+                }
+            else:
+                result = {'error': 'Please select at least 2 points.'}
+
+    return render(request, 'simulated_annealing.html', {
+        'result': result,
+        'api_key': settings.GOOGLE_MAPS_API_KEY
+    })

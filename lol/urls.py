@@ -10,4 +10,5 @@ urlpatterns = [
     path('genetic-algorithm/', views.genetic_algorithm, name='genetic_algorithm'),
     path('branch_and_bound_form/', views.branch_and_bound_view, name='branch_and_bound_form'),
     path('kkt/', views.kkt_solver, name='kkt'),
+    path('route-optimizer/', views.route_optimizer, name='route_optimizer')
 ]

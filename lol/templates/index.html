@@ -159,7 +159,16 @@
                 <form action="{% url 'genetic_algorithm' %}" method="get">
                     <button type="submit" class="button">Use Genetic algo Method</button>
                 </form>
-            </div>    
+            </div>  
+            
+            <div class="method-card" loading="lazy">
+                <h2 class="method-title">Route Optimization</h2>
+                <p class="method-description">Optimize solutions using natural selection principles to find the best combination under given constraints.</p>
+                <form action="{% url 'route_optimizer' %}" method="get">
+                    <button type="submit" class="button">Use Optimizer</button>
+                </form>
+            </div>
+
         </div>
     </div>
 </body>

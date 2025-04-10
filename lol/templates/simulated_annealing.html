@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulated Annealing Route Optimizer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Tailwind CSS CDN for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-green-100 to-blue-200 min-h-screen p-6">
+
+  <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6">
+    <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Simulated Annealing Route Optimizer</h2>
+
+    <form method="post" class="mb-6">
+      {% csrf_token %}
+      <div id="map" class="rounded-xl mb-4" style="height: 400px; width: 100%;"></div>
+      <input type="hidden" id="waypoints" name="waypoints">
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg transition">
+        Optimize Route
+      </button>
+    </form>
+
+    {% if result %}
+      <div class="mt-6 p-4 rounded-lg {{ result.error|yesno:'bg-red-100,bg-green-100' }}">
+        {% if result.error %}
+          <p class="text-red-600 font-semibold">{{ result.error }}</p>
+        {% else %}
+          <h3 class="text-xl font-bold mb-2 text-green-800">Optimized Path:</h3>
+          <ol class="list-decimal ml-6 text-gray-700">
+            {% for point in result.path %}
+              <li>Latitude: {{ point.lat }}, Longitude: {{ point.lng }}</li>
+            {% endfor %}
+          </ol>
+          <p class="mt-4 text-lg font-semibold text-green-700">Total Distance: {{ result.cost }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    let map;
+    let markers = [];
+    let autocomplete;
+  
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 22.5726, lng: 88.3639 },
+        zoom: 8,
+      });
+  
+      autocomplete = new google.maps.places.Autocomplete(
+        document.getElementById("autocomplete")
+      );
+      autocomplete.bindTo("bounds", map);
+  
+      autocomplete.addListener("place_changed", function () {
+        const place = autocomplete.getPlace();
+        if (!place.geometry || !place.geometry.location) {
+          alert("No details available for input: '" + place.name + "'");
+          return;
+        }
+  
+        map.setCenter(place.geometry.location);
+        map.setZoom(12);
+  
+        const marker = new google.maps.Marker({
+          position: place.geometry.location,
+          map: map,
+        });
+        markers.push(marker.getPosition());
+        updateWaypointsInput();
+      });
+  
+      map.addListener("click", function (event) {
+        const marker = new google.maps.Marker({
+          position: event.latLng,
+          map: map,
+        });
+        markers.push(event.latLng);
+        updateWaypointsInput();
+      });
+    }
+  
+    function updateWaypointsInput() {
+      const waypoints = markers.map(m => ({ lat: m.lat(), lng: m.lng() }));
+      document.getElementById("waypoints").value = JSON.stringify(waypoints);
+    }
+  </script>
+  
+
+   <!--<input id="autocomplete" class="w-full mb-4 p-2 border border-gray-300 rounded" 
+       type="text" placeholder="Enter a location...">
+
+    -->
+    <script async
+       src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initMap&libraries=places">
+     </script>
+     
+</body>
+</html>
