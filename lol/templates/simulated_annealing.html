@@ -105,6 +105,9 @@
       <div id="map"></div>
       <input type="hidden" id="waypoints" name="waypoints">
       <button type="submit">Optimize Route</button>
+      <button type="button" onclick="resetMap()" style="margin-top: 1rem; background-color: var(--error-color);">
+        Reset
+      </button>
     </form>
 
     {% if result %}
@@ -155,18 +158,37 @@
       });
 
       map.addListener("click", function (event) {
-        const marker = new google.maps.Marker({
-          position: event.latLng,
-          map: map,
-        });
-        markers.push(event.latLng);
-        updateWaypointsInput();
+        if (markers.length < 2) {
+          const marker = new google.maps.Marker({
+            position: event.latLng,
+            map: map,
+            label: markers.length === 0 ? "Start" : "End"
+          });
+          markers.push(marker);
+          updateWaypointsInput();
+        } else {
+          alert("Only start and end points are allowed!");
+        }
       });
     }
 
     function updateWaypointsInput() {
-      const waypoints = markers.map(m => ({ lat: m.lat(), lng: m.lng() }));
+      const waypoints = markers.map(m => ({
+        lat: m.getPosition().lat(),
+        lng: m.getPosition().lng()
+      }));
       document.getElementById("waypoints").value = JSON.stringify(waypoints);
+    }
+
+    function resetMap() {
+      // Clear markers on the map
+      markers.forEach(marker => marker.setMap(null));
+      markers = []; // Reset the markers array
+      // Clear the hidden input field
+      document.getElementById("waypoints").value = "";
+      // Optionally, reset the map view
+      map.setCenter({ lat: 22.5726, lng: 88.3639 });
+      map.setZoom(8);
     }
   </script>
 
