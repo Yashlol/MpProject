@@ -5,35 +5,120 @@
   <title>Simulated Annealing Route Optimizer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Tailwind CSS CDN for styling -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --primary-color: #3b82f6;
+      --primary-hover: #2563eb;
+      --secondary-color: #10b981;
+      --background-dark: #111827;
+      --background-card: #1f2937;
+      --text-light: #f3f4f6;
+      --border-color: #374151;
+      --error-color: #ef4444;
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.3);
+    }
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      background-color: var(--background-dark);
+      font-family: 'Inter', sans-serif;
+      color: var(--text-light);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: var(--background-card);
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-color);
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    #map {
+      width: 100%;
+      height: 400px;
+      border-radius: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .result {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .result.success {
+      background-color: #064e3b;
+      border: 1px solid var(--secondary-color);
+    }
+
+    .result.error {
+      background-color: #7f1d1d;
+      border: 1px solid var(--error-color);
+    }
+
+    ol {
+      margin-left: 1.5rem;
+    }
+
+    .result p {
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-green-100 to-blue-200 min-h-screen p-6">
+<body>
 
-  <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6">
-    <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Simulated Annealing Route Optimizer</h2>
+  <div class="container">
+    <h2>Simulated Annealing Route Optimizer</h2>
 
-    <form method="post" class="mb-6">
+    <form method="post">
       {% csrf_token %}
-      <div id="map" class="rounded-xl mb-4" style="height: 400px; width: 100%;"></div>
+      <div id="map"></div>
       <input type="hidden" id="waypoints" name="waypoints">
-      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg transition">
-        Optimize Route
-      </button>
+      <button type="submit">Optimize Route</button>
     </form>
 
     {% if result %}
-      <div class="mt-6 p-4 rounded-lg {{ result.error|yesno:'bg-red-100,bg-green-100' }}">
+      <div class="result {% if result.error %}error{% else %}success{% endif %}">
         {% if result.error %}
-          <p class="text-red-600 font-semibold">{{ result.error }}</p>
+          <p class="text-red-400 font-semibold">{{ result.error }}</p>
         {% else %}
-          <h3 class="text-xl font-bold mb-2 text-green-800">Optimized Path:</h3>
-          <ol class="list-decimal ml-6 text-gray-700">
+          <h3 class="text-lg font-bold mb-2">Optimized Path:</h3>
+          <ol>
             {% for point in result.path %}
               <li>Latitude: {{ point.lat }}, Longitude: {{ point.lng }}</li>
             {% endfor %}
           </ol>
-          <p class="mt-4 text-lg font-semibold text-green-700">Total Distance: {{ result.cost }}</p>
+          <p>Total Distance: {{ result.cost }}</p>
         {% endif %}
       </div>
     {% endif %}
@@ -42,37 +127,33 @@
   <script>
     let map;
     let markers = [];
-    let autocomplete;
-  
+
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 22.5726, lng: 88.3639 },
         zoom: 8,
+        styles: [
+          { elementType: 'geometry', stylers: [{ color: '#1f2937' }] },
+          { elementType: 'labels.text.fill', stylers: [{ color: '#f3f4f6' }] },
+          { elementType: 'labels.text.stroke', stylers: [{ color: '#111827' }] },
+          {
+            featureType: 'administrative',
+            elementType: 'geometry',
+            stylers: [{ color: '#374151' }]
+          },
+          {
+            featureType: 'poi',
+            elementType: 'geometry',
+            stylers: [{ color: '#1f2937' }]
+          },
+          {
+            featureType: 'road',
+            elementType: 'geometry',
+            stylers: [{ color: '#374151' }]
+          }
+        ]
       });
-  
-      autocomplete = new google.maps.places.Autocomplete(
-        document.getElementById("autocomplete")
-      );
-      autocomplete.bindTo("bounds", map);
-  
-      autocomplete.addListener("place_changed", function () {
-        const place = autocomplete.getPlace();
-        if (!place.geometry || !place.geometry.location) {
-          alert("No details available for input: '" + place.name + "'");
-          return;
-        }
-  
-        map.setCenter(place.geometry.location);
-        map.setZoom(12);
-  
-        const marker = new google.maps.Marker({
-          position: place.geometry.location,
-          map: map,
-        });
-        markers.push(marker.getPosition());
-        updateWaypointsInput();
-      });
-  
+
       map.addListener("click", function (event) {
         const marker = new google.maps.Marker({
           position: event.latLng,
@@ -82,21 +163,16 @@
         updateWaypointsInput();
       });
     }
-  
+
     function updateWaypointsInput() {
       const waypoints = markers.map(m => ({ lat: m.lat(), lng: m.lng() }));
       document.getElementById("waypoints").value = JSON.stringify(waypoints);
     }
   </script>
-  
 
-   <!--<input id="autocomplete" class="w-full mb-4 p-2 border border-gray-300 rounded" 
-       type="text" placeholder="Enter a location...">
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initMap&libraries=places">
+  </script>
 
-    -->
-    <script async
-       src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initMap&libraries=places">
-     </script>
-     
 </body>
 </html>
