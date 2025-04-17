@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -94,9 +95,66 @@
             align-items: center;
             margin-bottom: 2.5rem;
         }
+        /* Canvas for the stars effect */
+        canvas#stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Shooting Star animation */
+        @keyframes shootStar {
+            0% {
+                opacity: 1;
+                transform: translateX(-100px) translateY(-100px);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(100vw) translateY(100vh);
+            }
+        }
+
+        .shooting-star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background-color: white;
+            border-radius: 50%;
+            opacity: 1;
+            animation: shootStar 2s linear infinite;
+        }
+
+        /* Adjust the animation so stars move across the screen */
+        @keyframes starTrail {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* Trail of the star */
+        .star-trail {
+            position: absolute;
+            width: 50px;
+            height: 1px;
+            background-color: white;
+            animation: starTrail 2s infinite;
+        }
+
+          
     </style>
 </head>
 <body>
+    <canvas id="stars" class="absolute inset-0 z-0"></canvas>
+
     <div class="container">
         <!-- Header section with icon -->
         <div class="header">
@@ -171,5 +229,7 @@
 
         </div>
     </div>
+    <script src="{% static 'js/stars.js' %}"></script>
+    <script src="{% static 'js/shootingStars.js' %}"></script>
 </body>
 </html>
